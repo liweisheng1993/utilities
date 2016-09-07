@@ -1,12 +1,11 @@
-package com.liws.eventchannel;
+package com.liws.utilities.eventchannel;
 
 import java.io.OutputStream;
-import java.lang.reflect.Method;
 
 /**
  * Created by liweisheng on 16/9/7.
  */
-public class Message implements Record{
+public class Message implements Record {
     private String methodName;
     private Object messageBody;
     private Object target;

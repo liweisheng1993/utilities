@@ -1,8 +1,8 @@
-package com.liws.eventchannel;
+package com.liws.utilities.eventchannel;
 
 import com.google.common.collect.HashMultimap;
-import com.liws.eventchannel.exceptions.MethodModifierInvalidException;
-import com.liws.eventchannel.exceptions.ParameterCountInvalidException;
+import com.liws.utilities.eventchannel.exceptions.MethodModifierInvalidException;
+import com.liws.utilities.eventchannel.exceptions.ParameterCountInvalidException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

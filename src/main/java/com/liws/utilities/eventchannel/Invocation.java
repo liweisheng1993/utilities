@@ -1,4 +1,4 @@
-package com.liws.eventchannel;
+package com.liws.utilities.eventchannel;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

@@ -1,6 +1,6 @@
-package com.liws.eventchannel.test;
+package com.liws.utilities.test;
 
-import com.liws.eventchannel.EventChannel;
+import com.liws.utilities.eventchannel.EventChannel;
 import org.junit.Before;
 import org.junit.Test;
 

@@ -1,4 +1,4 @@
-package com.liws.eventchannel;
+package com.liws.utilities.eventchannel;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

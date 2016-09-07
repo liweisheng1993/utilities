@@ -1,4 +1,4 @@
-package com.liws.eventchannel.exceptions;
+package com.liws.utilities.eventchannel.exceptions;
 
 /**
  * Created by liweisheng on 16/9/7.

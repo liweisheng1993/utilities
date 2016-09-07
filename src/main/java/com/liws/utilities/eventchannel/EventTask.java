@@ -1,4 +1,4 @@
-package com.liws.eventchannel;
+package com.liws.utilities.eventchannel;
 
 /**
  * Created by liweisheng on 16/9/7.

@@ -1,6 +1,6 @@
-package com.liws.eventchannel.test;
+package com.liws.utilities.test;
 
-import com.liws.eventchannel.Sub;
+import com.liws.utilities.eventchannel.Sub;
 
 /**
  * Created by liweisheng on 16/9/7.
