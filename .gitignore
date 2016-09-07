@@ -1,0 +1,22 @@
+# Created by .ignore support plugin (hsz.mobi)
+.DS_Store
+.settings
+.project
+.classpath
+.jar
+target/
+.svn/
+*.iml
+/ant/ant.properties
+.idea/
+*/.settings
+*/.project
+*/.classpath
+*/target/
+*/.svn/
+*/*.class
+*/bin66
+*/target
+mytree
+rebel.xml
+ant.properties
