@@ -3,7 +3,7 @@ package com.liws.utilities.eventchannel;
 import java.io.OutputStream;
 
 /**
- * Created by liweisheng on 16/9/7.
+ * Created by liweisheng on 16/8/21.
  */
 public class Message implements Record {
     private String methodName;

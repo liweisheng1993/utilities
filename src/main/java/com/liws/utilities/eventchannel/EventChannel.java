@@ -15,7 +15,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * Created by liweisheng on 16/9/7.
+ * Created by liweisheng on 16/8/21.
  */
 public class EventChannel {
 

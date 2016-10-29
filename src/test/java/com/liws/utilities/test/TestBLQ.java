@@ -3,9 +3,11 @@ package com.liws.utilities.test;
 import com.liws.utilities.blockqueue.BlockingLinkedQueue;
 import org.junit.Test;
 
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by liweisheng on 16/9/7.
@@ -13,24 +15,22 @@ import java.util.concurrent.TimeUnit;
 
 class Producer implements Runnable{
     private BlockingLinkedQueue blq;
+    private static AtomicLong num = new AtomicLong(0L);
 
     public Producer(BlockingLinkedQueue blq){
         this.blq = blq;
     }
     @Override
     public void run() {
-        for(int i=0;i<100;++i){
-            try {
-                TimeUnit.MILLISECONDS.sleep(2);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            blq.put(i);
+        for(int i=0;i<10;++i){
+
+            blq.put(num.getAndIncrement());
         }
     }
 }
 
 class Consumer implements Runnable{
+    public static AtomicLong count = new AtomicLong(0L);
     private BlockingLinkedQueue blq;
 
     public Consumer(BlockingLinkedQueue blq){
@@ -41,6 +41,7 @@ class Consumer implements Runnable{
     public void run() {
         for(int i=0;i<10;++i){
             Object v = blq.poll();
+            count.incrementAndGet();
             System.out.println(v);
         }
 
@@ -50,29 +51,42 @@ class Consumer implements Runnable{
 public class TestBLQ {
 //    @Test
     public void testSingle(){
-        BlockingLinkedQueue<Integer> blq = new BlockingLinkedQueue<>();
-        for(int i=0;i<0;++i){
+        BlockingLinkedQueue<Long> blq = new BlockingLinkedQueue<>();
+        for(long i=0;i<0;++i){
             blq.put(i);
         }
-        for(int i=0;i<100;++i){
-            Integer v = blq.poll();
+        for(int i=0;i<1000;++i){
+            Long v = blq.poll();
             System.out.println(v);
         }
     }
 
     @Test
     public void testMulti(){
-        BlockingLinkedQueue<Integer> blq = new BlockingLinkedQueue<>();
+        BlockingLinkedQueue<Long> blq = new BlockingLinkedQueue<>();
         ExecutorService executor = Executors.newCachedThreadPool();
+        Long start = System.currentTimeMillis();
         for(int i=0;i<10;++i){
             executor.execute(new Producer(blq));
-            executor.execute(new Consumer(blq));
         }
 
         try {
-            TimeUnit.SECONDS.sleep(100);
+            executor.awaitTermination(10,TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
+        for(int i=0;i<10;++i){
+            executor.execute(new Consumer(blq));
+        }
+
+        System.out.println("time cost: " + (System.currentTimeMillis() - start) + " count:" + Consumer.count);
+
+        try {
+            executor.awaitTermination(10,TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
     }
 }

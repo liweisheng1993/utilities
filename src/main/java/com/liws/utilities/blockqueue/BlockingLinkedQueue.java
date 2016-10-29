@@ -1,14 +1,21 @@
 package com.liws.utilities.blockqueue;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import sun.misc.Unsafe;
 
 import java.lang.reflect.Field;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 
 /**
- * Created by liweisheng on 16/9/7.
+ * Created by liweisheng on 16/8/27.
  */
 public class BlockingLinkedQueue<E> {
+    private static Logger LOG = LoggerFactory.getLogger(BlockingLinkedQueue.class);
+    private static AtomicLong uuid = new AtomicLong(0L);
     static final int COMPLETE = 0;
     static final int WAITING = 1;
     static final Unsafe unsafe;
@@ -51,6 +58,11 @@ public class BlockingLinkedQueue<E> {
     }
 
     public E poll(){
+        return  takeValue(-1);
+    }
+
+    private E takeValue(long millis){
+        Long tick = 1L;
         E value = null;
         Thread currentThread = Thread.currentThread();
         WaiterNode waiterNode = new WaiterNode(null, currentThread, WAITING);
@@ -58,50 +70,70 @@ public class BlockingLinkedQueue<E> {
         for(;;){
             if(waiterNode.getPrev() == waitHead){
                 value = getValue();
+                LOG.debug("waiter:{}, poll value:{}",waiterNode,value);
+                compareAndSetWaitHead(waitHead,waiterNode);
                 waiterNode.setStatus(COMPLETE);
                 WaiterNode nextNode = waiterNode.getNext();
                 if(null != nextNode){
                     nextNode.unparkSelf();
+                    LOG.debug("unpark waiter:{},time:{}",nextNode.toString(),System.currentTimeMillis());
                 }
                 break;
             }else{
                 WaiterNode prev = waiterNode.getPrev();
-                while(prev != waitHead){
-                    if(prev.getStatus() == COMPLETE){
-                        waiterNode.setPrev(prev.getPrev());
-                        prev.getPrev().setNext(waiterNode);
-                    }
-                    prev = waiterNode.getPrev();
-                }
+
                 if(prev != waitHead){
-                    waiterNode.parkSelf();
+                    LOG.debug("park self:{},time:{}", waiterNode, System.currentTimeMillis());
+                    if(0 == millis){
+                        break;
+                    }else if(millis < 0){
+                        waiterNode.parkSelf(1000000 * tick);
+                        tick = tick << 1;
+                    }else{
+                        Long timeAlreadyWait = (tick-1) * 1000000;
+                        if(timeAlreadyWait >= millis){
+                            return value;
+                        }else if(millis - timeAlreadyWait > tick * 1000000){
+                            waiterNode.parkSelf(1000000 * tick);
+                            tick = tick << 1;
+                        }else{
+                            waiterNode.parkSelf(millis - timeAlreadyWait);
+                        }
+                    }
+                    LOG.debug("unpark self:{}",waiterNode);
                 }
             }
         }
         return value;
     }
 
-    private E getValue(){
+    public E getValue(){
         ValueNode oldHead = valueHead;
         ValueNode oldTail = valueTail;
         if(null == oldHead){
             return null;
         }
 
-        compareAndSetValueHead(oldHead,oldHead.getNext());
-        if(oldTail == oldHead){
-            compareAndSetValueTail(oldTail,null);
+        if(compareAndSetValueHead(oldHead,oldHead.getNext())){
+            if(oldTail == oldHead){
+                compareAndSetValueTail(oldTail,null);
+            }
+
+            return oldHead.getValue();
         }
-        return oldHead.getValue();
+
+        return null;
     }
 
     private void addValue(E value){
         ValueNode valueNode = new ValueNode(value);
+        LOG.debug("add new value:{}",value);
         for(;;){
             ValueNode oldTail = valueTail;
             if(null == oldTail){
-                if(compareAndSetValueHead(null,valueNode)){
-                    valueTail = valueHead;
+                if(compareAndSetValueTail(null, valueNode)){
+                    valueHead = valueTail;
+                    LOG.debug("tail is null, set to:{},head is:{}",valueNode.value,valueHead.value);
                     //TODO:如果waitNode上有等待线程,唤醒它.
                     WaiterNode headNext = waitHead.getNext();
 
@@ -116,6 +148,7 @@ public class BlockingLinkedQueue<E> {
                 }
             }else{
                 if(compareAndSetValueTail(oldTail, valueNode)){
+                    LOG.debug("previous tail:{}, add value:{},current tail:{},head:{}",oldTail.value,value,valueTail.value,valueHead.value);
                     oldTail.setNext(valueNode);
                     break;
                 }
@@ -128,6 +161,7 @@ public class BlockingLinkedQueue<E> {
             WaiterNode oldTail = this.waitTail;
             waiter.setPrev(oldTail);
             if(compareAndSetWaitTail(oldTail, waiter)){
+                LOG.debug("add new waiter:{},previous tail:{},current tail:{}",waiter.toString(),oldTail.toString(),waiter.toString());
                 oldTail.setNext(waiter);
                 break;
             }
@@ -192,7 +226,8 @@ public class BlockingLinkedQueue<E> {
     }
 
     class WaiterNode{
-        private  int status;
+        private Long uuid;
+        volatile private  int status;
         private WaiterNode prev;
 
         private WaiterNode next;
@@ -207,6 +242,7 @@ public class BlockingLinkedQueue<E> {
             }
 
             this.status = status;
+            this.uuid = BlockingLinkedQueue.uuid.getAndIncrement();
 
         }
 
@@ -246,8 +282,21 @@ public class BlockingLinkedQueue<E> {
             LockSupport.park(this);
         }
 
+        public void parkSelf(long nanos){
+            LockSupport.parkNanos(this,nanos);
+        }
+
         public void unparkSelf(){
             LockSupport.unpark(currentThread);
+        }
+
+        @Override
+        public String toString() {
+            return "WaiterNode{" +
+                    "uuid=" + uuid +
+                    ", status=" + status +
+                    ", currentThread=" + currentThread +
+                    '}';
         }
     }
 }

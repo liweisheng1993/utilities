@@ -3,7 +3,7 @@ package com.liws.utilities.eventchannel;
 import java.lang.reflect.Method;
 
 /**
- * Created by liweisheng on 16/9/7.
+ * Created by liweisheng on 16/8/20.
  */
 public class RegistEnrty {
     Method method;

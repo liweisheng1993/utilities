@@ -1,7 +1,7 @@
 package com.liws.utilities.eventchannel;
 
 /**
- * Created by liweisheng on 16/9/7.
+ * Created by liweisheng on 16/8/19.
  */
 public class EventTask implements Runnable {
     private Invocation invocation;
